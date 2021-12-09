@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+
+		#options {
+			width: 500px;
+			margin: 0 auto;
+			display: flex;
+			justify-content: space-around;
+
+			align-items: center;
+		}
+
+		#options button {
+			background-color: #fff;
+			border: 1px solid black;
+			height: 20px;
+			width: 100px;
+			margin: 20px 0px;
+		}
+
+		#grid {
+			width: 500px;
+			height: 500px;
+			text-align: center;
+			margin: 0 auto;
+			display: grid;
+			grid-template-columns: repeat(10, 1fr);
+			grid-template-rows: repeat(10, 1fr);
+			grid-gap: 6px 6px;
+		}
+
+		#grid>div {
+			border: 1px solid black;
+			line-height: 40px;
+			user-select: none;
+			/* 设置不可拖拽选中 */
+			cursor: pointer;
+			/* 设置鼠标停留样式 */
+			/* border-radius: 3px; */
+		}
+
+		#grid>div:hover {
+			background: #0af;
+		}
+	</style>
+</head>
+<!-- ondragstart:防拖拽生成新页面 oncontextmenu:屏蔽右键菜单-->
+
+<body ondragstart='return false' oncontextmenu='self.event.returnValue=false'>
+	<div id="options">
+		<button type="button">生成地图</button>
+		<button type="button">重新开始</button>
+	</div>
+	<div id="grid">
+
+	</div>
+	<script type="text/javascript">
+
+		let row = 10 //行数
+		let col = 10 //列数
+		var maxCount = 10; //最大地雷数量
+		var isFirstOpen = true; //是否是第一次打开方格
+		let gridHtml = '' //用于生成div
+		let grid = document.querySelector('#grid') //获取容器
+		let gridArr = [] //存储所有格子的二维数组
+		document.querySelector('#options button:last-child').addEventListener('click', function () {
+			location.reload()
+		})
+		//点击生成地图的事件
+		document.querySelector('#options button:first-child').addEventListener('click', function () {
+
+			if (gridArr.length === 0) {
+				gridArr = initGrid()
+				for (let i = 0; i < row; i++) {
+					for (let j = 0; j < col; j++) {
+						gridArr[i][j]._i = i;
+						gridArr[i][j]._j = j;
+						gridArr[i][j].addEventListener('mousedown', addEvent)
+					}
+				}
+			}
+
+
+		})
+
+		// 初始化地图的函数
+		function initGrid() {
+			//循环生成100个格子
+			for (let i = 0; i < 100; i++) {
+				gridHtml += '<div></div>'
+			}
+			grid.innerHTML = gridHtml
+			//获取所有的小格子并且将其转换为数组
+			let blocks = document.querySelectorAll('#grid div')
+			let arr = Array.from(blocks)
+			//初始化放置所有格子的数组
+			var gridArray = []
+			//通过循环将每个格子都放置在对应的二维数组的位置
+			for (let i = 0; i < arr.length; i++) {
+				//每十个格子为一组
+				if (i % 10 === 0) {
+					gridArray.push([]);
+				}
+				//初始化计雷数
+				arr[i].count = 0;
+				gridArray[parseInt(i / 10)].push(arr[i]);
+			}
+			//最后将数组返回回去方便后面使用
+			return gridArray
+		}
+
+		// 点击格子的时候调用的函数
+		function open(_i, _j) {
+			//先根据坐标将点击的格子从映射的二维数组中取出
+			let openBox = gridArr[_i][_j]
+			//将盒子的状态设置为打开并添加相应样式
+			op(openBox)
+			//判断点击的盒子是否是炸弹
+			if (openBox.isMine) {
+				//踩雷
+				openBox.innerHTML = '雷'; //显示为 '雷'
+				//遍历矩阵打开所有的地雷方格
+				for (let i = 0; i < row; i++) {
+					for (let j = 0; j < col; j++) {
+						//找到地雷
+						openBox = gridArr[i][j]
+						//将所有没打开并且为炸弹的格子显示出来并设置样式
+						if (!openBox.isOpen && openBox.isMine) {
+							op(openBox); //设置打开状态和样式
+							openBox.innerHTML = '雷'; //显示为 '雷'
+						}
+					}
+				}
+				//提示游戏结束
+				alert("游戏结束");
+				//将事件全部移除
+				for (let i = 0; i < row; i++) {
+					for (let j = 0; j < col; j++) {
+						gridArr[i][j].removeEventListener('mousedown', addEvent);
+					}
+				}
+			} else if (openBox.count === 0) {
+				//打开计雷数为0的方格
+				//遍历九宫格内的方格
+				for (let i = openBox._i - 1; i < openBox._i + 2; i++) {
+					for (let j = openBox._j - 1; j < openBox._j + 2; j++) {
+						//判断是否越界&&跳过已打开的方格&&非雷
+						if (i > -1 && j > -1 && i < row && j < col && !gridArr[i][j].isOpen && !gridArr[i][j].isMine) {
+							//递归打开方格函数
+							open(i, j);
+						}
+					}
+				}
+			} else {
+				//不是空格子并且也不是雷就显示周围雷的数量
+				openBox.innerHTML = openBox.count
+			}
+
+			//设置打开的格子的样式
+			function op(obj) {
+				obj.isOpen = true; //isOpen为自定义属性，设置为true代表已打开
+				obj.style.background = '#ccc'; //将背景设置为灰色
+				obj.style.cursor = 'default'; //将鼠标停留样式设置为默认
+			}
+
+		}
+
+		// 每个小格子的事件处理函数
+		function addEvent(e) {
+			//跳过已打开的方格
+			if (gridArr[this._i][this._j].isOpen) {
+				return;
+			}
+			//鼠标左键打开格子
+			if (e.button === 0) {
+				// 如果是第一次打开就生成地雷
+				if (isFirstOpen) {
+					isFirstOpen = false //是否是第一次打开格子
+					let BomoCount = 0 //当前地雷数
+					//生成地雷
+					while (BomoCount < maxCount) {
+						//生成随机坐标
+						let ri = Math.floor(Math.random() * row)
+						let rj = Math.floor(Math.random() * col)
+						//坐标不等于第一次点击方格的坐标 && 非雷方格
+						if (!(ri === this._i && rj === this._j) && !gridArr[ri][rj].isMine) {
+							gridArr[ri][rj].isMine = true //将方格标记为地雷
+							BomoCount++
+							//第一层控制搜索范围到地雷的上下三格
+							for (let i = ri - 1; i < ri + 2; i++) {
+								//第二层循环控制范围到地雷的左右三格
+								for (let j = rj - 1; j < rj + 2; j++) {
+									//判断防止下标越界
+									if (i > -1 && j > -1 && i < row && j < col) {
+										//计雷数+1										
+										gridArr[i][j].count++;
+									}
+								}
+							}
+						}
+					}
+				}
+				// 传入坐标根据点击的格子的状态判断下一步操作
+				open(this._i, this._j)
+			}
+			//鼠标右键标记方格
+			else if (e.button === 2) {
+				let block = gridArr[this._i][this._j];
+				if (block.innerHTML !== '▲') {
+					block.innerHTML = '▲';
+				} else {
+					block.innerHTML = '';
+				}
+			}
+			//每次点击完成后判断是否具备胜利条件
+			let isWin = true;
+			for (let i = 0; i < row; i++) {
+				for (let j = 0; j < col; j++) {
+					let block = gridArr[i][j]
+					//判断游戏胜利条件(所有的非雷方格已打开)
+					if (!block.isMine && !block.isOpen) {
+						//如果有未打开的非雷方块 条件不成立
+						isWin = false
+					}
+				}
+			}
+			if (isWin) {
+				alert("游戏胜利");
+			}
+		}
+	</script>
+</body>
+
+</html>
