@@ -73,45 +73,42 @@
 		let gridHtml = '' //用于生成div
 		let grid = document.querySelector('#grid') //获取容器
 		let gridArr = [] //存储所有格子的二维数组
+		
 		document.querySelector('#options button:last-child').addEventListener('click', function () {
 			location.reload()
 		})
 		//点击生成地图的事件
 		document.querySelector('#options button:first-child').addEventListener('click', function () {
-
 			if (gridArr.length === 0) {
-				gridArr = initGrid()
-				for (let i = 0; i < row; i++) {
-					for (let j = 0; j < col; j++) {
-						gridArr[i][j]._i = i;
-						gridArr[i][j]._j = j;
+				gridArr = initGrid([])
+				console.log(gridArr)
+				gridArr.forEach((it, i) => {
+					it.forEach((em, j) => {
+						gridArr[i][j]._i = i
+						gridArr[i][j]._j = j
 						gridArr[i][j].addEventListener('mousedown', addEvent)
-					}
-				}
+					})
+				})
 			}
 		})
 
 		// 初始化地图的函数
-		function initGrid() {
+		function initGrid(gridArray) {
 			// 生成100个格子
 			gridHtml = divStr.repeat(100)
 			grid.innerHTML = gridHtml
 			//获取所有的小格子并且将其转换为数组
 			let blocks = document.querySelectorAll('#grid div')
 			let arr = Array.from(blocks)
-			//初始化放置所有格子的数组
-			let gridArray = []
-			//通过循环将每个格子都放置在对应的二维数组的位置
-			for (let i = 0; i < arr.length; i++) {
-				//每十个格子为一组
-				if (i % 10 === 0) {
-					gridArray.push([]);
+			console.log(arr);
+			//通过forEach遍历返回二维数组
+			arr.forEach((item, index) => {
+				if (index % 10 === 0) {
+					gridArray.push([])
 				}
-				//初始化计雷数
-				arr[i].count = 0;
-				gridArray[parseInt(i / 10)].push(arr[i]);
-			}
-			//最后将数组返回回去方便后面使用
+				arr[index].count = 0
+				gridArray[Math.trunc(index / 10)].push(arr[index])
+			})
 			return gridArray
 		}
 
