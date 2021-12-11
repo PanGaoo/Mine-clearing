@@ -67,8 +67,9 @@
 
 		let row = 10 //行数
 		let col = 10 //列数
-		var maxCount = 10; //最大地雷数量
-		var isFirstOpen = true; //是否是第一次打开方格
+		let maxCount = 10 //最大地雷数量
+		let isFirstOpen = true //是否是第一次打开方格
+		let divStr = '<div></div>' //每个格子的字符串
 		let gridHtml = '' //用于生成div
 		let grid = document.querySelector('#grid') //获取容器
 		let gridArr = [] //存储所有格子的二维数组
@@ -88,22 +89,18 @@
 					}
 				}
 			}
-
-
 		})
 
 		// 初始化地图的函数
 		function initGrid() {
-			//循环生成100个格子
-			for (let i = 0; i < 100; i++) {
-				gridHtml += '<div></div>'
-			}
+			// 生成100个格子
+			gridHtml = divStr.repeat(100)
 			grid.innerHTML = gridHtml
 			//获取所有的小格子并且将其转换为数组
 			let blocks = document.querySelectorAll('#grid div')
 			let arr = Array.from(blocks)
 			//初始化放置所有格子的数组
-			var gridArray = []
+			let gridArray = []
 			//通过循环将每个格子都放置在对应的二维数组的位置
 			for (let i = 0; i < arr.length; i++) {
 				//每十个格子为一组
